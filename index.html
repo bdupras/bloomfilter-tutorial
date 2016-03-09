@@ -88,7 +88,9 @@ table.bitvector .unused {
 <script>
 var EMPTY = '\240';
 var BULLET = '\u2219';
-var NUMBITS = 256; // must > 0 and a multiple of 32 for this demo
+var NUMBITS = 80; // must > 0 and a multiple of 32 for this demo
+var NUM_BITS_PER_ENTRY = 4;
+var NUM_VALS_PER_ENTRY = Math.pow(2, NUM_BITS_PER_ENTRY);
 var MAX_KICKS = 20;
 
 function pad(i) {
@@ -125,9 +127,9 @@ $(function() {
 
   function fingerprint(val) {
     // return a UTF-8 math symbol to represent a 4-bit fingerprint
-    // return '1234567890ABCDEF'.charAt(murmur('fingerprint' + val) % 16);
-    // return String.fromCharCode((murmur('fingerprint' + val) % 16) * 5 + 8704);
-    return String.fromCharCode((murmur('XXfingerprintXX' + val) % 16) + 10744);
+    // return '1234567890ABCDEF'.charAt(murmur('fingerprint' + val) % NUM_VALS_PER_ENTRY);
+    // return String.fromCharCode((murmur('fingerprint' + val) % NUM_VALS_PER_ENTRY) * 5 + 8704);
+    return String.fromCharCode((murmur('XXfingerprintXX' + val) % NUM_VALS_PER_ENTRY) + 10744);
   }
 
   $.subscribe("/input/live/insert", function(event, val){
@@ -174,8 +176,8 @@ $(function() {
             <table id="cuckooFilter" class="bitVector" border=1 cellpadding=0 cellspacing=0>
             </table>
             <script>
-              var cuckooEntriesPerBucket = 4; // 2, 4, or 8
-              var cuckooBucketCount = NUMBITS / cuckooEntriesPerBucket / 4; // 4-bit fingerprints
+              var cuckooEntriesPerBucket = 2; // 2, 4, or 8
+              var cuckooBucketCount = NUMBITS / cuckooEntriesPerBucket / NUM_BITS_PER_ENTRY;
 
               // add the table cells which represent our cuckoo filter bit array
               for (var bucket=0; bucket<cuckooBucketCount; bucket++) {
@@ -271,6 +273,7 @@ $(function() {
                 var entry = cuckooPutEntry(fingerprint, buckets[0]) || cuckooPutEntry(fingerprint, buckets[1]);
                 if (entry) {
                   $(entry).removeClass('kicked').addClass('hit');
+                  $.publish('/cuckoo/modified');
                 }
               });
 
@@ -285,14 +288,25 @@ $(function() {
 
                 if (entry) {
                   $(entry).addClass('hit').text(EMPTY);
+                  $.publish('/cuckoo/modified');
                 }
               });
 
             </script>
 
+            <p>FPP: <span id='liveCuckooFPP'>0</span>%</p>
             <p>In filter: <span id='liveInCuckoo'></span></p>
             <p>Fingerprint: <span id='liveFingerprint'></span></p>
             <script>
+              $.subscribe('/cuckoo/modified', function(){
+                var empties = $("[id^=cuckooEntry]:contains(" + EMPTY + ")").toArray().length;
+                var totalEntries = $("[id^=cuckooEntry]").toArray().length;
+                var occupied = totalEntries - empties;
+                var load = occupied / totalEntries;
+                var fpp = 1.0 - Math.pow( (NUM_VALS_PER_ENTRY - 1) / NUM_VALS_PER_ENTRY, 2 * cuckooEntriesPerBucket * load );
+                $('#liveCuckooFPP').text((100 * fpp).toFixed(4));
+              });
+
               $.subscribe('/live/hashes', function(hashes, fingerprint){
                 $("#liveFingerprint").text(fingerprint);
                 var buckets = cuckooBuckets(hashes[0], fingerprint);
@@ -341,14 +355,14 @@ $(function() {
 
               for (var segment=0; segment<NUMBITS/bitsPerSegment; segment++) {
                 var segStr = segment.toString(bitsPerSegment);
-                $("#bloomFilter").append('<tr id="bloomBits' +  segStr + '"><th>' + segStr.toUpperCase() + '</th></tr>');
+                $("#bloomFilter").append('<tr id="bloomSeg' +  segStr + '"><th>' + segStr.toUpperCase() + '</th></tr>');
 
                 for (var i=0; i<bitsPerSegment; i++) {
                   var bit = (bitsPerSegment * segment) + i;
                   if (bit < NUMBITS) {
-                    $("#bloomBits" + segStr).append('<td id="bloomBit' + bit + '">&nbsp;</td>');
+                    $("#bloomSeg" + segStr).append('<td id="bloomBit' + bit + '">&nbsp;</td>');
                   } else {
-                    $("#bloomBits" + segStr).append('<td class="unused"></td>');
+                    $("#bloomSeg" + segStr).append('<td class="unused"></td>');
                   }
                 }
               }
@@ -368,11 +382,19 @@ $(function() {
 
               $.subscribe('/action/insert', function(val, hashes, fingerprint){
                 hashes.map(bloomIndex).forEach(function(i){$('#bloomBit' + i).text(BULLET).addClass('hit')});
+                $.publish('/bloom/modified');
               });
             </script>
 
+            <p>FPP: <span id='bloomFpp'>0</span>%</p>
             <p>In filter: <span id='liveInBloom'></span></p>
             <script>
+              $.subscribe('/bloom/modified', function(){
+                var occupied = $("[id^=bloomBit]:contains(" + BULLET + ")").toArray().length;
+                var fpp = Math.pow(occupied / NUMBITS, 2);
+                $('#bloomFpp').text((fpp * 100).toFixed(2));
+              });
+
               $.subscribe('/live/hashes', function(hashes, fingerprint){
                 var inBloom = 
                   hashes
@@ -390,7 +412,7 @@ $(function() {
         </tr>
       </table>
     </div>
-    <br></br>
+    <br />
     <div class='insetbox'>
         <p>
           Enter a string: <input id='inputStr' 
