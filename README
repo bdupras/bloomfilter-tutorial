@@ -1,1 +1,6 @@
 Page hosted at http://billmill.org/bloomfilter-tutorial/
+
+=TODO
+* Host on github.io
+* Bloom - index header & left column
+* Current FPP - Bloom & Cuckoo
