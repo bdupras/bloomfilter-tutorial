@@ -16,9 +16,18 @@ body {
   font-family: Palatino, Georgia, "Times New Roman", Times, serif;
   font-size: 17px;
 }
+table.superstructure {
+   /*border: 2px solid black;*/
+}
 table.superstructure td {
    /*border: 2px solid black;*/
    padding: 20px;
+   text-align: center;
+}
+table.superstructure th {
+   /*border: 2px solid black;*/
+   font-size: 18pt;
+   text-align: center;
 }
 .insetbox {
   margin: auto;
@@ -28,8 +37,11 @@ table.superstructure td {
   -moz-border-radius: 10px;
   border-radius: 10px;
 }
+table #cuckooFilter.bitvector {
+  font-size: 18pt;
+}
 table.bitvector {
-  font-size: 12pt;
+  font-size: 14pt;
   border-width: 1px;
   border-spacing: 0px;
   border-style: none;
@@ -37,6 +49,7 @@ table.bitvector {
   border-collapse: collapse;
   background-color: white;
   margin: auto;
+  border-collapse: collapse;
   font-family: monospace;
   text-align: center;
 }
@@ -50,6 +63,7 @@ table.bitvector th {
 }
 table.bitvector td {
   width: 2em;
+  height: 2em;
   border-width: 1px;
   padding: 0px;
   border-style: solid;
@@ -81,13 +95,29 @@ table.bitvector .unused {
   background-color: darkred !important;
   color: white;
 }
+.vertical-text {
+  transform: rotate(270deg);
+  transform-origin: right bottom 0;
+  float: left;
+  font-size: 18pt;
+}
+.inputarea {
+  font-size: 18pt;
+}
+.stats { font-size: 20pt; } 
+input { font-size: 20pt; }
+button { font-size: 20pt; }
+
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
 <script src="jquery.tinypubsub.js"></script>
 <script src='murmurhash.js'></script>
 <script>
 var EMPTY = '\240';
-var BULLET = '\u2219';
+// var BULLET = '\u2219';
+// var BULLET = '\u2b24';
+var BULLET = '\u2b25';
+// var BULLET = '\u2776';
 var NUMBITS = 80; // must > 0 and a multiple of 32 for this demo
 var NUM_BITS_PER_ENTRY = 4;
 var NUM_VALS_PER_ENTRY = Math.pow(2, NUM_BITS_PER_ENTRY);
@@ -129,7 +159,8 @@ $(function() {
     // return a UTF-8 math symbol to represent a 4-bit fingerprint
     // return '1234567890ABCDEF'.charAt(murmur('fingerprint' + val) % NUM_VALS_PER_ENTRY);
     // return String.fromCharCode((murmur('fingerprint' + val) % NUM_VALS_PER_ENTRY) * 5 + 8704);
-    return String.fromCharCode((murmur('XXfingerprintXX' + val) % NUM_VALS_PER_ENTRY) + 10744);
+    // return String.fromCharCode((murmur('XXfingerprintXX' + val) % NUM_VALS_PER_ENTRY) + 10744);
+    return String.fromCharCode((murmur('XXfingerprintXX' + val) % NUM_VALS_PER_ENTRY) + 9812);
   }
 
   $.subscribe("/input/live/insert", function(event, val){
@@ -173,6 +204,7 @@ $(function() {
         <tr><th>Cuckoo Filter</th><th>Bloom Filter</th></tr>
         <tr>
           <td valign="top">
+            <span class="vertical-text">Buckets</span>
             <table id="cuckooFilter" class="bitVector" border=1 cellpadding=0 cellspacing=0>
             </table>
             <script>
@@ -294,9 +326,11 @@ $(function() {
 
             </script>
 
-            <p>FPP: <span id='liveCuckooFPP'>0</span>%</p>
-            <p>In filter: <span id='liveInCuckoo'></span></p>
-            <p>Fingerprint: <span id='liveFingerprint'></span></p>
+            <span class='stats'>
+              <p>FPP: <span id='liveCuckooFPP'>0</span>%</p>
+              <p>In filter: <span id='liveInCuckoo'></span></p>
+              <p>Fingerprint (4-bit): <span id='liveFingerprint'></span></p>
+            </span>
             <script>
               $.subscribe('/cuckoo/modified', function(){
                 var empties = $("[id^=cuckooEntry]:contains(" + EMPTY + ")").toArray().length;
@@ -386,8 +420,10 @@ $(function() {
               });
             </script>
 
-            <p>FPP: <span id='bloomFpp'>0</span>%</p>
-            <p>In filter: <span id='liveInBloom'></span></p>
+            <span class='stats'>
+              <p>FPP: <span id='bloomFpp'>0</span>%</p>
+              <p>In filter: <span id='liveInBloom'></span></p>
+            </span>
             <script>
               $.subscribe('/bloom/modified', function(){
                 var occupied = $("[id^=bloomBit]:contains(" + BULLET + ")").toArray().length;
@@ -413,14 +449,14 @@ $(function() {
       </table>
     </div>
     <br />
-    <div class='insetbox'>
+    <div class='insetbox inputarea'>
         <p>
           Enter a string: <input id='inputStr' 
           onkeydown='$.publish("/input/live/insert", [event, value])'
           onkeyup='$.publish("/input/live", value)'
           >
-          <input type="button" value="insert" onclick='$.publish("/input/insert", $("#inputStr").val())'>
-          <input type="button" value="remove" onclick='$.publish("/input/remove", $("#inputStr").val())'>
+          <button onclick='$.publish("/input/insert", $("#inputStr").val())'>insert</button>
+          <button onclick='$.publish("/input/remove", $("#inputStr").val())'>remove</button>
         </p>
         <script>
           $.subscribe('/multiset/modified', function(){ $('#inputStr').val(''); $("#inputStr").focus();});
