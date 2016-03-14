@@ -26,7 +26,6 @@ table.superstructure td {
 }
 table.superstructure th {
    /*border: 2px solid black;*/
-   font-size: 18pt;
    text-align: center;
 }
 .insetbox {
@@ -37,11 +36,8 @@ table.superstructure th {
   -moz-border-radius: 10px;
   border-radius: 10px;
 }
-table #cuckooFilter.bitvector {
-  font-size: 18pt;
-}
 table.bitvector {
-  font-size: 14pt;
+  /*font-size: 14pt;*/
   border-width: 1px;
   border-spacing: 0px;
   border-style: none;
@@ -54,6 +50,8 @@ table.bitvector {
   text-align: center;
 }
 table.bitvector th {
+  height: 2em;
+  width: 2em;
   border-width: 1px;
   padding: 1px;
   border-style: solid;
@@ -62,17 +60,14 @@ table.bitvector th {
   -moz-border-radius: ;
 }
 table.bitvector td {
-  width: 2em;
   height: 2em;
+  width: 2em;
   border-width: 1px;
   padding: 0px;
   border-style: solid;
   border-color: rgb(221, 221, 221);
   background-color: white;
   -moz-border-radius: ;
-}
-table#cuckooFilter.bitvector td {
-  width: 4em;
 }
 table.bitvector .unused {
   background-color: rgb(241, 241, 206);
@@ -99,14 +94,7 @@ table.bitvector .unused {
   transform: rotate(270deg);
   transform-origin: right bottom 0;
   float: left;
-  font-size: 18pt;
 }
-.inputarea {
-  font-size: 18pt;
-}
-.stats { font-size: 20pt; } 
-input { font-size: 20pt; }
-button { font-size: 20pt; }
 
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
@@ -118,10 +106,10 @@ var EMPTY = '\240';
 // var BULLET = '\u2b24';
 var BULLET = '\u2b25';
 // var BULLET = '\u2776';
-var NUMBITS = 80; // must > 0 and a multiple of 32 for this demo
-var NUM_BITS_PER_ENTRY = 4;
+var NUMBITS = 140; // must > 0 and a multiple of 32 for this demo
+var NUM_BITS_PER_ENTRY = 7;
 var NUM_VALS_PER_ENTRY = Math.pow(2, NUM_BITS_PER_ENTRY);
-var MAX_KICKS = 20;
+var MAX_KICKS = 50;
 
 function pad(i) {
   return ("0000" + i).slice(-2);
@@ -151,8 +139,11 @@ $(function() {
   });
 
   function hashes(val) {
-    return [0,1,2,3].map(function(i){ return murmur(i + val) });
-    // return [murmur(val), murmur("1" + val)];
+    var ret=[];
+    for (var i=0; i<NUM_BITS_PER_ENTRY; i++) {
+      ret.push(murmur(i + val));
+    }
+    return ret;
   }
 
   function fingerprint(val) {
@@ -160,14 +151,15 @@ $(function() {
     // return '1234567890ABCDEF'.charAt(murmur('fingerprint' + val) % NUM_VALS_PER_ENTRY);
     // return String.fromCharCode((murmur('fingerprint' + val) % NUM_VALS_PER_ENTRY) * 5 + 8704);
     // return String.fromCharCode((murmur('XXfingerprintXX' + val) % NUM_VALS_PER_ENTRY) + 10744);
-    return String.fromCharCode((murmur('XXfingerprintXX' + val) % NUM_VALS_PER_ENTRY) + 9812);
+    // return String.fromCharCode((murmur('XXfingerprintXX' + val) % NUM_VALS_PER_ENTRY) + 9812);
+    return "" + (murmur('XXfingerprintXX' + val) % NUM_VALS_PER_ENTRY + 1);
   }
 
   $.subscribe("/input/live/insert", function(event, val){
     // handle enter key
     if (event.keyCode == '13') {
       event.preventDefault();
-      if (val != '') $.publish("/input/insert", val);
+      if ('' != val) $.publish(event.shiftKey ? '/input/remove' : '/input/insert', val);
     }
   });
 
@@ -327,18 +319,26 @@ $(function() {
             </script>
 
             <span class='stats'>
-              <p>FPP: <span id='liveCuckooFPP'>0</span>%</p>
+              <p>FPP: <span id='cuckooFPP'>0</span>%</p>
               <p>In filter: <span id='liveInCuckoo'></span></p>
-              <p>Fingerprint (4-bit): <span id='liveFingerprint'></span></p>
+              <p>Fingerprint (<span id='cuckooBitsPerFp'></span>-bit): <span id='liveFingerprint'></span></p>
             </span>
             <script>
+              $(function() {
+                $('#cuckooBitsPerFp').text("" + NUM_BITS_PER_ENTRY);
+              });
               $.subscribe('/cuckoo/modified', function(){
-                var empties = $("[id^=cuckooEntry]:contains(" + EMPTY + ")").toArray().length;
                 var totalEntries = $("[id^=cuckooEntry]").toArray().length;
+                var empties = $("[id^=cuckooEntry]:contains(" + EMPTY + ")").toArray().length;
                 var occupied = totalEntries - empties;
                 var load = occupied / totalEntries;
+
                 var fpp = 1.0 - Math.pow( (NUM_VALS_PER_ENTRY - 1) / NUM_VALS_PER_ENTRY, 2 * cuckooEntriesPerBucket * load );
-                $('#liveCuckooFPP').text((100 * fpp).toFixed(4));
+
+                1.0 - Math.pow( ( NUM_VALS_PER_ENTRY - 1 ) / NUM_VALS_PER_ENTRY, 2 * cuckooEntriesPerBucket * load )
+
+
+                $('#cuckooFPP').text((100 * fpp).toFixed(4));
               });
 
               $.subscribe('/live/hashes', function(hashes, fingerprint){
@@ -427,8 +427,8 @@ $(function() {
             <script>
               $.subscribe('/bloom/modified', function(){
                 var occupied = $("[id^=bloomBit]:contains(" + BULLET + ")").toArray().length;
-                var fpp = Math.pow(occupied / NUMBITS, 2);
-                $('#bloomFpp').text((fpp * 100).toFixed(2));
+                var fpp = Math.pow(occupied / NUMBITS, NUM_BITS_PER_ENTRY);
+                $('#bloomFpp').text((fpp * 100).toFixed(6));
               });
 
               $.subscribe('/live/hashes', function(hashes, fingerprint){

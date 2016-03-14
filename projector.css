@@ -1,0 +1,25 @@
+table.superstructure th {
+   font-size: 18pt;
+}
+table.bitvector {
+  font-size: 14pt;
+}
+table.bitvector td {
+  width: 2em;
+  height: 2em;
+}
+table #cuckooFilter.bitvector {
+  font-size: 18pt;
+}
+table#cuckooFilter.bitvector td {
+  width: 4em;
+}
+.vertical-text {
+  font-size: 18pt;
+}
+.inputarea {
+  font-size: 18pt;
+}
+.stats { font-size: 20pt; } 
+input { font-size: 20pt; }
+button { font-size: 20pt; }
