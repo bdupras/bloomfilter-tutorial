@@ -1,5 +1,5 @@
 <html><head>
-<title>Cuckoo Filter and Bloom Filter By Example</title>
+<title>Probabilistic Filters By Example: Cuckoo Filter and Bloom Filters</title>
 <style>
 #content {
   width: 70%;
@@ -37,7 +37,6 @@ table.superstructure th {
   border-radius: 10px;
 }
 table.bitvector {
-  /*font-size: 14pt;*/
   border-width: 1px;
   border-spacing: 0px;
   border-style: none;
@@ -73,6 +72,37 @@ table.bitvector .unused {
   background-color: rgb(241, 241, 206);
   color: rgb(241, 241, 206);
   border-style: none;
+}
+table.features {
+  width: 80%;
+  border-width: 1px;
+  border-spacing: 0px;
+  border-style: none;
+  border-color: rgb(51, 51, 51);
+  border-collapse: collapse;
+  background-color: white;
+  margin: auto;
+  text-align: center;
+}
+table.features th {
+  border-width: 1px;
+  padding: 1px;
+  border-style: solid;
+  border-color: rgb(221, 221, 221);
+  background-color: white;
+  padding: 10px;
+}
+table.features td {
+  font-weight: normal;
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgb(221, 221, 221);
+  background-color: white;
+  padding: 10px;
+}
+table.features td.winner {
+  color: white;
+  background-color: rgb(0, 128, 0);
 }
 .live {
   background-color: green !important;
@@ -189,9 +219,18 @@ $(function() {
 </script>
 </head><body>
 <div id='content'>
-    <h1>Cuckoo Filter and Bloom Filter By Example</h1>
+    <h1>Probablistic Filters By Example</h1>
+
+    <p>Probablistic filters are high-speed, space-efficient data structures that support set-membership 
+    tests with a one-sided error. A probabilistic filter can claim that an given entry is <em>definitely not</em> 
+    represented in the set, or <em>might</em> be represented in the set. That is, negative responses are
+    conclusive, whereas positive responses incur a small false positive probability (FPP).</p>
+
+    <p>The trade-off for this one-sided error is space-efficiency. Cuckoo Filters and Bloom Filters
+    require approximately 7 bits per entry at 3% FPP, regardless of the size of the entries.</p>
 
     <div class="insetbox" align="center">
+      <h2>Probablistic Filters Visualized</h2>
       <table class="superstructure">
         <tr><th>Cuckoo Filter</th><th>Bloom Filter</th></tr>
         <tr>
@@ -362,24 +401,6 @@ $(function() {
             <table id="bloomFilter" class="bitVector" border=1 cellpadding=0 cellspacing=0>
             </table>
             <script>
-              // // add the table cells which represent our bloom filter bit array
-              // var bitsPerSegment = 16;
-              // for (var segment=0; segment<NUMBITS/bitsPerSegment; segment++) {
-              //   $("#bloomFilter").append('<tr id="bloomSegment' + segment.toString(bitsPerSegment) + '"></tr>');
-              //   $("#bloomFilter").append('<tr id="bloomBits' +  segment.toString(bitsPerSegment) + '"></tr>');
-              //   for (var i=0; i<bitsPerSegment; i++) {
-              //     var bit = (bitsPerSegment * segment) + i;
-              //     if (bit < NUMBITS) {
-              //       $("#bloomSegment" + segment).append('<th id="bloomIndex' + bit + '">' + pad(bit.toString(bitsPerSegment)) + '</th>');
-              //       $("#bloomBits" + segment).append('<td id="bloomBit' + bit.toString(bitsPerSegment) + '">&nbsp;</td>');
-              //     } else {
-              //       debugger;
-              //       $("#bloomSegment" + segment).append('<th class="unused">&nbsp;</th>');
-              //       $("#bloomBits" + segment).append('<td class="unused">&nbsp;</td>');
-              //     }
-              //   }
-              // }
-
               // add the table cells which represent our bloom filter bit array
               var bitsPerSegment = 16;
               $("#bloomFilter").append('<tr id="bloomOnes"><th class="unused"></th></tr>');
@@ -447,41 +468,89 @@ $(function() {
           </td>
         </tr>
       </table>
+      <p>
+        Enter a string: <input id='inputStr' 
+        onkeydown='$.publish("/input/live/insert", [event, value])'
+        onkeyup='$.publish("/input/live", value)'
+        >
+        <button onclick='$.publish("/input/insert", $("#inputStr").val())'>insert</button>
+        <button onclick='$.publish("/input/remove", $("#inputStr").val())'>remove</button>
+      </p>
+      <script>
+        $.subscribe('/multiset/modified', function(){ $('#inputStr').val(''); $("#inputStr").focus();});
+      </script>
+
+      <p>MultiSet: <span id='setContents'></span></p>
+      <script>
+        $.subscribe('/multiset/modified', function(action, val, set){
+          $('#setContents').text(set.join(", "));
+        });
+      </script>
     </div>
     <br />
-    <div class='insetbox inputarea'>
-        <p>
-          Enter a string: <input id='inputStr' 
-          onkeydown='$.publish("/input/live/insert", [event, value])'
-          onkeyup='$.publish("/input/live", value)'
-          >
-          <button onclick='$.publish("/input/insert", $("#inputStr").val())'>insert</button>
-          <button onclick='$.publish("/input/remove", $("#inputStr").val())'>remove</button>
-        </p>
-        <script>
-          $.subscribe('/multiset/modified', function(){ $('#inputStr').val(''); $("#inputStr").focus();});
-        </script>
+    <div class='insetbox'>
+    <h2>How do they work?</h2>
+    <p><strong>Bloom Filters</strong> operate by hashing an entry with k hash functions, and setting k bits within a bit vector upon
+    insertion. Queries repeat the k hash functions and check the corresponding bits. When any checked bit is not set,
+    the entry is <em>definitely not</em> in the filter. When all checked bits are set, the entry <em>might</em> be in the
+    filter. False positives occur when all checked bits happen to be set by any combination of previously inserted entries.</p>
 
-<!--         <p>Hash: <span id='liveHash'></span></p>
-        <script>
-          $.subscribe('/live/hashes', function(hashes, fingerprint){
-            $('#liveHash').text(hashes.join(", ")+ " (" + fingerprint + ")");
-          });
-        </script>
+    <p><strong>Cuckoo Filters</strong> operate by hasing an entry with one hash function, and inserting a small f-bit fingerprint of 
+    the entry into an open position in either of two alternate buckets. When both buckets are full, the filter recursively 
+    <em><a href='https://en.wikipedia.org/wiki/Cuckoo_hashing'>kicks</a></em> existing entries to their alternate buckets until 
+    space is found or attempts are exhausted. Queries repeat the hash function and check both buckets for the fingerprint. When a 
+    matching fingerprint is not found, the entry is <em>definitely not</em> in the filter. When a matching fingerprint is found in 
+    either bucket, the entry <em>might</em> be in the filter. False positives occur when another entry inserted a mathcing 
+    fingerprint into either of the two checked buckets. Deletion is supported by removing one instance of an entry's fingerprint from
+    either bucket.
+    </p>
+    </div>
+    <br />
+    <div class='insetbox'>
+    <h2>What are they good for?</h2>
+      <p>Probabilistic filters are used in a variety of applications where slow or expensive operations can be
+      avoided prior to execution by a consulting comparitavely fast or cheap set membership test.</p>
 
-        <p>Last Action: <span id='setActions'></span></p>
-        <script>
-          $.subscribe('/last/action', function(action, val, hashes, fingerprint){
-            $('#setActions').text(action + ': ' + val + ", " + hashes.join(", ") + " (" + fingerprint + ")");
-          });
-        </script>
+      <p><strong>DB query optimization:</strong> data stored in a database can be inserted into a probabilistic filter. 
+      Later, prior to querying for the data, the filter can be consulted test whether the data exists. When the
+      filter response is negative, an unnecessary DB query can be avoided.</p>
 
- -->        <p>MultiSet: <span id='setContents'></span></p>
-        <script>
-          $.subscribe('/multiset/modified', function(action, val, set){
-            $('#setContents').text(set.join(", "));
-          });
-        </script>
+      <p><strong>Edge filtering: </strong>
+      filter data can be distributed to the edges of networks, similar to edge caching, where queries for 
+      potentially non-existent data received at the edge can be filtered out quickly.</p>
+    </div>
+    <br />
+    <div class='insetbox'>
+    <h2>Which should I choose?</h2>
+      <p><strong>tl;dr </strong>Choose Cuckoo if available unless your application is timing sensitive on insertion.</p>
+
+      <blockquote>...for reasonably large sized sets, for the same false positive rate as a corresponding Bloom filter, cuckoo filters use less space than Bloom filters, are faster on lookups (but slower on insertions/to construct), and amazingly also allow deletions of keys (which Bloom filters cannot do). -<a href='http://mybiasedcoin.blogspot.com/2014/10/cuckoo-filters.html'>Michael Mitzenmacher (2014)</a></blockquote>
+
+
+      <table class='features'>
+        <tr><th>&nbsp;</th><th>Cuckoo Filter</th><th>Bloom Filter</th></tr>
+        <tr><th>Insert</th><td>Variable. O(1) amortized.<small><br>longer as load factor approaches capacity</small></td><td class='winner'>O(k)<small><br>fixed</small></td></tr>
+        <tr><th>As load increases</th><td class='winner'>Insertions may be rejected<br />FPP trends toward desired max</td><td>Insertions cannot be rejected<br />FPP trends toward 100%</td></tr>
+        <tr><th>Lookup</th><td class='winner'>O(1) to O(2)</td><td>Variable. O(log<sub>2</sub>[1/fpp]) to O(k)</td></tr>
+        <tr><th>Count</th><td class='winner'>O(2)<small><br/>minimal suport: max == entries per bucket X 2</small></td><td><em>unsupported</em></td></tr>
+        <tr><th>Delete</th><td class='winner'>O(1) to O(2)</td><td><em>unsupported</em></td></tr>
+        <tr><th>Bits per entry</th><td class='winner'>smaller when desired FPP &lt;= 3% </td><td>smaller when desired FPP &gt; 3% </td></tr>
+        <tr><th>Availability</th><td>limited (as of early 2016)<small><br />
+          <a href='https://github.com/efficient/cuckoofilter'>cpp</a>
+          <a href='https://github.com/bdupras/guava-probably'>java</a>
+          <a href='https://github.com/seiflotfy/cuckoofilter'>go</a>
+        </small></td><td class='winner'>widely available</a></td></tr>
+      </table>
+    </div>
+    <br />
+    <div class='insetbox'>
+    <h2>See also</h2>
+      <ul>
+        <li><a href='https://www.cs.cmu.edu/~dga/papers/cuckoo-conext2014.pdf'>Cuckoo Filter: Practically Better Than Bloom</a>, Bin Fan, et al.
+        <li><a href='http://mybiasedcoin.blogspot.com/2014/10/cuckoo-filters.html'>Cuckoo Filters</a>, Michael Mitzenmacher
+        <li><a href='http://billmill.org/bloomfilter-tutorial/'>Bloom Filters by Example</a>, Bill Mill
+        <li><a href='https://en.wikipedia.org/wiki/Bloom_filter'>Bloom filter on Wikipedia</a>
+      </ul>
     </div>
 </div>
 </body></html>
