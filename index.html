@@ -490,11 +490,6 @@ $(function() {
     <br />
     <div class='insetbox'>
     <h2>How do they work?</h2>
-    <p><strong>Bloom Filters</strong> operate by hashing an entry with k hash functions, and setting k bits within a bit vector upon
-    insertion. Queries repeat the k hash functions and check the corresponding bits. When any checked bit is not set,
-    the entry is <em>definitely not</em> in the filter. When all checked bits are set, the entry <em>might</em> be in the
-    filter. False positives occur when all checked bits happen to be set by any combination of previously inserted entries.</p>
-
     <p><strong>Cuckoo Filters</strong> operate by hasing an entry with one hash function, and inserting a small f-bit fingerprint of 
     the entry into an open position in either of two alternate buckets. When both buckets are full, the filter recursively 
     <em><a href='https://en.wikipedia.org/wiki/Cuckoo_hashing'>kicks</a></em> existing entries to their alternate buckets until 
@@ -504,6 +499,11 @@ $(function() {
     fingerprint into either of the two checked buckets. Deletion is supported by removing one instance of an entry's fingerprint from
     either bucket.
     </p>
+
+    <p><strong>Bloom Filters</strong> operate by hashing an entry with k hash functions, and setting k bits within a bit vector upon
+    insertion. Queries repeat the k hash functions and check the corresponding bits. When any checked bit is not set,
+    the entry is <em>definitely not</em> in the filter. When all checked bits are set, the entry <em>might</em> be in the
+    filter. False positives occur when all checked bits happen to be set by any combination of previously inserted entries.</p>
     </div>
     <br />
     <div class='insetbox'>
