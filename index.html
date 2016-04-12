@@ -508,7 +508,7 @@ $(function() {
     <br />
     <!-- <div class='insetbox'> -->
     <h2>How do they work?</h2>
-    <p><strong>Cuckoo Filters</strong> operate by hasing an entry with one hash function, and inserting a small f-bit fingerprint of 
+    <p><strong>Cuckoo Filters</strong> operate by hashing an entry with one hash function, and inserting a small f-bit fingerprint of 
     the entry into an open position in either of two alternate buckets. When both buckets are full, the filter recursively 
     <a href='https://en.wikipedia.org/wiki/Cuckoo_hashing'>kicks</a> existing entries to their alternate buckets until 
     space is found or attempts are exhausted. Lookups repeat the hash function and check both buckets for the fingerprint. When a 
@@ -528,7 +528,7 @@ $(function() {
       avoided prior to execution by a consulting comparitavely fast or cheap set membership test.</p>
 
       <p><strong>DB query optimization:</strong> data stored in a database can be inserted into a probabilistic filter. 
-      Later, prior to querying for the data, the filter can be consulted test whether the data exists. When the
+      Later, prior to querying for the data, the filter can be consulted to test whether the data exists. When the
       filter response is negative, an unnecessary DB query can be avoided.</p>
 
       <p><strong>Edge filtering: </strong>
