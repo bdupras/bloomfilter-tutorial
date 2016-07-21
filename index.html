@@ -77,7 +77,7 @@ table#cuckooFilter td {
   width: 4em;
 }
 table.features {
-  width: 80%;
+  width: 100%;
   border-width: 1px;
   border-spacing: 0px;
   border-style: none;
@@ -545,18 +545,63 @@ $(function() {
 
       <div class='insetbox'>
         <table class='features'>
-          <tr><th>&nbsp;</th><th>Cuckoo Filter</th><th>Bloom Filter</th></tr>
-          <tr><th>Insert</th><td>Variable. O(1) amortized.<small><br>longer as load factor approaches capacity</small></td><td class='winner'>O(k)<small><br>fixed</small></td></tr>
-          <tr><th>As load increases</th><td class='winner'>Insertions may be rejected<br />FPP trends toward desired max</td><td>Insertions cannot be rejected<br />FPP trends toward 100%</td></tr>
-          <tr><th>Lookup</th><td class='winner'>O(1) to O(2)</td><td>Variable. O(log<sub>2</sub>[1/fpp]) to O(k)</td></tr>
-          <tr><th>Count</th><td class='winner'>O(2)<small><br/>minimal suport: max == entries per bucket X 2</small></td><td><em>unsupported</em></td></tr>
-          <tr><th>Delete</th><td class='winner'>O(1) to O(2)</td><td><em>unsupported</em></td></tr>
-          <tr><th>Bits per entry</th><td class='winner'>smaller when desired FPP &lt;= 3% </td><td>smaller when desired FPP &gt; 3% </td></tr>
-          <tr><th>Availability</th><td>limited (as of early 2016)<small><br />
-            <a href='https://github.com/efficient/cuckoofilter'>cpp</a>
-            <a href='https://github.com/bdupras/guava-probably'>java</a>
-            <a href='https://github.com/seiflotfy/cuckoofilter'>go</a>
-          </small></td><td class='winner'>widely available</a></td></tr>
+          <tr><th>&nbsp;</th><th>Cuckoo Filter</th><th>Standard Bloom Filter</th><th>Counting Bloom Filter</th></tr>
+          <tr>
+            <th>Insert</th>
+            <td>Variable. O(1) amortized<small><br />longer as load factor approaches capacity</small></td>
+            <td class='winner'>Fixed. O(k)</td>
+            <td class='winner'>Fixed. O(k)</td>
+          </tr>
+          <tr>
+            <th>As load increases</th>
+            <td class='winner'><p>FPP trends toward desired max</p><p>Insertions <em>may</em> be rejected<small><br />if counting or deletion support is enabled</small></p></td>
+            <td><p>FPP trends toward 100%</p><p>Insertions cannot be rejected</p></td>
+            <td><p>FPP trends toward 100%</p><p>Insertions <em>may</em> be rejected</p></td>
+          </tr>
+          <tr>
+            <th>Lookup</th>
+            <td class='winner'>O(1)<small><br />Maximum of two buckets to check</small></td>
+            <td>O(k)</td>
+            <td>O(k)</td>
+          </tr>
+          <tr>
+            <th>Count</th>
+            <td class='winner'>O(1)<small><br/>minimal suport: max == entries per bucket X 2</small></td>
+            <td><em>unsupported</em></td>
+            <td>O(k)</td>
+          </tr>
+          <tr>
+            <th>Delete</th>
+            <td class='winner'>O(1)<small><br />Maximum of two buckets to inspect</small></td>
+            <td><em>unsupported</em></td>
+            <td>O(k)</td>
+          </tr>
+          <tr>
+            <th>Bits per entry</th>
+            <td class='winner'>smaller when desired FPP &lt;= 3% </td>
+            <td>smaller when desired FPP &gt; 3% </td>
+            <td>larger than Cuckoo &amp; Standard Bloom<small><br />multiplied by number of bits per counter</small></td>
+          </tr>
+
+          <tr>
+            <th>Bits per entry</th>
+            <td class='winner'>1.05 [ log<sub>2</sub>(1/FPP) + log<sub>2</sub>(2b) ]<small><br />best when FPP &lt;= 0.5%<br />"semi-sort cuckoo" best when FPP &lt;= 3%<br /></small></td>
+            <td class='winner'>1.44 log<sub>2</sub>(1/FPP)<small><br />best when FPP &gt; 0.5%</small></td>
+            <td>c [ 1.44 log<sub>2</sub>(1/FPP) ]<small><br />where c is the number of bits per counter, e.g. 4</small></td>
+          </tr>
+
+          <tr>
+            <th>Availability</th>
+            <td>limited (as of early 2016)
+              <small><br />
+                <a href='https://github.com/efficient/cuckoofilter'>cpp</a>
+                <a href='https://github.com/bdupras/guava-probably'>java</a>
+                <a href='https://github.com/seiflotfy/cuckoofilter'>go</a>
+              </small>
+            </td>
+            <td class='winner'>widely available</a></td>
+            <td class='winner'>widely available</a></td>
+          </tr>
         </table>
       </div>
 
