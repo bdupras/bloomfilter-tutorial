@@ -513,7 +513,7 @@ $(function() {
     <a href='https://en.wikipedia.org/wiki/Cuckoo_hashing'>kicks</a> existing entries to their alternate buckets until 
     space is found or attempts are exhausted. Lookups repeat the hash function and check both buckets for the fingerprint. When a 
     matching fingerprint is not found, the entry is <em>definitely not</em> in the filter. When a matching fingerprint is found in 
-    either bucket, the entry <em>might</em> be in the filter. False positives occur when another entry inserted a mathcing 
+    either bucket, the entry <em>might</em> be in the filter. False positives occur when another entry inserted a matching 
     fingerprint into either of the two checked buckets. Deletion is supported by removing one instance of an entry's fingerprint from
     either bucket. Counting is supported by inserting multiple fingerprints of the same value into the same pair of buckets.
     </p>
