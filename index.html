@@ -525,15 +525,15 @@ $(function() {
 
     <h2>What are they good for?</h2>
       <p>Probabilistic filters are used in a variety of applications where slow or expensive operations can be
-      avoided prior to execution by a consulting comparitavely fast or cheap set membership test.</p>
+      avoided prior to execution by a consulting comparatively fast or cheap set membership test.</p>
 
-      <p><strong>DB query optimization:</strong> data stored in a database can be inserted into a probabilistic filter. 
+      <p><strong>DB query optimization:</strong> Data stored in a database can be inserted into a probabilistic filter. 
       Later, prior to querying for the data, the filter can be consulted to test whether the data exists. When the
       filter response is negative, an unnecessary DB query can be avoided.</p>
 
       <p><strong>Edge filtering: </strong>
-      filter data can be distributed to the edges of networks, similar to edge caching, where queries for 
-      potentially non-existent data received at the edge can be filtered out quickly. Unlike a cache, a copy of original
+      Filter data can be distributed to the edges of networks, similar to edge caching, where queries for 
+      potentially non-existent data received at the edge can be filtered out quickly. Unlike a cache, a copy of the original
       data is not stored in the filter.</p>
 
     <h2>Which should I choose?</h2>
@@ -566,7 +566,7 @@ $(function() {
           </tr>
           <tr>
             <th>Count</th>
-            <td class='winner'>O(1)<small><br/>minimal suport: max == entries per bucket X 2</small></td>
+            <td class='winner'>O(1)<small><br/>minimal suport: max == entries per bucket × 2</small></td>
             <td><em>unsupported</em></td>
             <td>O(k)</td>
           </tr>
